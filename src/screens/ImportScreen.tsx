@@ -100,17 +100,28 @@ export function ImportScreen({ onComplete, onCancel }: Props) {
         {mode === 'photo' && (
           <div className="max-w-md mx-auto space-y-4">
             <h2 className="text-lg font-semibold text-stone-900">Foto hochladen</h2>
-            <label className="block w-full aspect-[4/3] rounded-2xl overflow-hidden bg-white border-2 border-dashed border-stone-300 cursor-pointer flex items-center justify-center relative hover:border-emerald-400 transition-colors">
+            <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden bg-white border-2 border-dashed border-stone-300 flex items-center justify-center relative">
               {photoPreview ? (
-                <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                <img src={photoPreview} alt="Ausgewähltes Rezeptfoto" className="w-full h-full object-cover" />
               ) : (
                 <div className="flex flex-col items-center gap-2 text-stone-400">
-                  <Camera className="w-10 h-10" />
-                  <span className="text-sm">Foto auswählen oder aufnehmen</span>
+                  <ImageIcon className="w-10 h-10" />
+                  <span className="text-sm">Noch kein Bild ausgewählt</span>
                 </div>
               )}
-              <input type="file" accept="image/*" capture="environment" onChange={handlePhotoPick} className="hidden" />
-            </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-50 text-emerald-700 font-medium cursor-pointer hover:bg-emerald-100 transition-colors">
+                <Camera className="w-5 h-5" />
+                <span>Kamera</span>
+                <input type="file" accept="image/*" capture="environment" onChange={handlePhotoPick} className="hidden" />
+              </label>
+              <label className="flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-100 text-stone-700 font-medium cursor-pointer hover:bg-stone-200 transition-colors">
+                <ImageIcon className="w-5 h-5" />
+                <span>Galerie</span>
+                <input type="file" accept="image/*" onChange={handlePhotoPick} className="hidden" />
+              </label>
+            </div>
             {error && <div className="text-sm text-red-600 bg-red-50 rounded-xl p-3 border border-red-100">{error}</div>}
             <button
               onClick={handlePhotoImport}
