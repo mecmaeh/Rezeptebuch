@@ -85,19 +85,13 @@ export function CookbookProvider({ children }: { children: ReactNode }) {
     if (!user) return { error: 'Nicht eingeloggt.' };
 
     const inviteCode = generateInviteCode();
-    const { data: cb, error } = await supabase
-      .from('cookbooks')
-      .insert({ name, invite_code: inviteCode, owner_id: user.id })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('create_cookbook', {
+      p_name: name,
+      p_invite_code: inviteCode,
+    });
 
     if (error) return { error: error.message };
-
-    const { error: memberError } = await supabase
-      .from('cookbook_members')
-      .insert({ cookbook_id: (cb as Cookbook).id, user_id: user.id, role: 'owner' });
-
-    if (memberError) return { error: memberError.message };
+    if (data?.error) return { error: data.error };
 
     await refresh();
     return { error: null };
@@ -106,24 +100,12 @@ export function CookbookProvider({ children }: { children: ReactNode }) {
   const joinCookbook = useCallback(async (inviteCode: string) => {
     if (!user) return { error: 'Nicht eingeloggt.' };
 
-    const { data: cb, error } = await supabase
-      .from('cookbooks')
-      .select('*')
-      .eq('invite_code', inviteCode.toUpperCase().trim())
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('join_cookbook', {
+      p_invite_code: inviteCode,
+    });
 
-    if (error || !cb) return { error: 'Einladungscode nicht gefunden.' };
-
-    const { error: memberError } = await supabase
-      .from('cookbook_members')
-      .insert({ cookbook_id: (cb as Cookbook).id, user_id: user.id, role: 'member' });
-
-    if (memberError) {
-      if (memberError.code === '23505') {
-        return { error: 'Du bist bereits Mitglied dieses Kochbuchs.' };
-      }
-      return { error: memberError.message };
-    }
+    if (error) return { error: error.message };
+    if (data?.error) return { error: data.error };
 
     await refresh();
     return { error: null };
