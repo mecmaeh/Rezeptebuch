@@ -1,5 +1,5 @@
 export async function callImportFunction(
-  payload: { mode: 'photo'; imageUrl: string } | { mode: 'link'; url: string } | { mode: 'video'; text: string }
+  payload: { mode: 'photo'; imageUrl: string } | { mode: 'link'; url: string } | { mode: 'video'; url: string }
 ): Promise<{ data: any | null; error: string | null }> {
   const supUrl = (import.meta.env.VITE_SUPABASE_URL as string) || 'https://pfljdqjtkqrvbmfuynug.supabase.co';
   const supKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmbGpkcWp0a3FydmJtZnV5bnVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1OTE3NzksImV4cCI6MjEwODE2Nzc3OX0.Np4MutIfmXxaUmQ6lq0WUvbdZolV2kvlYWRzC6EjHUk';

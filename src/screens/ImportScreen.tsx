@@ -13,7 +13,7 @@ export function ImportScreen({ onComplete, onCancel }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [url, setUrl] = useState('');
-  const [text, setText] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -51,12 +51,12 @@ export function ImportScreen({ onComplete, onCancel }: Props) {
   };
 
   const handleVideoImport = async () => {
-    if (!text.trim()) return;
+    if (!videoUrl.trim()) return;
     setBusy(true);
     setError(null);
-    const { data, error } = await callImportFunction({ mode: 'video', text: text.trim() });
+    const { data, error } = await callImportFunction({ mode: 'video', url: videoUrl.trim() });
     if (error || !data) { setError(error ?? 'Extraktion fehlgeschlagen.'); setBusy(false); return; }
-    onComplete(data as ExtractedRecipe, 'video');
+    onComplete(data as ExtractedRecipe, 'video', videoUrl.trim());
     setBusy(false);
   };
 
@@ -90,8 +90,8 @@ export function ImportScreen({ onComplete, onCancel }: Props) {
             />
             <ImportOption
               icon={<Video className="w-6 h-6" />}
-              title="Video / Text"
-              desc="Videobeschreibung oder Transkript einfügen — Rezept wird extrahiert."
+              title="Video / Reel"
+              desc="Videolink einfügen — Rezept wird aus Beschreibung und verfügbaren Inhalten extrahiert."
               onClick={() => setMode('video')}
             />
           </div>
@@ -157,19 +157,19 @@ export function ImportScreen({ onComplete, onCancel }: Props) {
 
         {mode === 'video' && (
           <div className="max-w-md mx-auto space-y-4">
-            <h2 className="text-lg font-semibold text-stone-900">Video-Beschreibung / Text</h2>
-            <p className="text-sm text-stone-500">Füge die Videobeschreibung oder das Transkript eines Kochvideos ein.</p>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={10}
-              placeholder="Füge hier den Text ein..."
-              className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-stone-900 text-sm resize-none"
+            <h2 className="text-lg font-semibold text-stone-900">Video- oder Reel-Link</h2>
+            <p className="text-sm text-stone-500">Füge den Link eines Kochvideos oder Reels ein. Die Rezeptinformationen werden automatisch aus der Videoseite und Beschreibung gelesen.</p>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all text-stone-900"
             />
             {error && <div className="text-sm text-red-600 bg-red-50 rounded-xl p-3 border border-red-100">{error}</div>}
             <button
               onClick={handleVideoImport}
-              disabled={!text.trim() || busy}
+              disabled={!videoUrl.trim() || busy}
               className="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-semibold flex items-center justify-center gap-2 hover:bg-emerald-700 disabled:opacity-60 transition-colors"
             >
               {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Wird verarbeitet...</> : 'Rezept extrahieren'}

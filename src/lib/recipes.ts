@@ -123,8 +123,7 @@ export async function saveRecipe(
       recipe_id: id,
       position: idx,
       name: ing.name.trim(),
-      quantity: ing.quantity,
-      unit: ing.unit,
+      ...normalizeIngredientMeasurement(ing.quantity, ing.unit),
       quantity_per_portion: ing.quantity != null ? ing.quantity / draft.portions : null,
       note: ing.note,
     }));
@@ -191,6 +190,51 @@ export async function deleteRecipe(recipeId: string): Promise<{ error: string | 
 export function scaleQuantity(ingredient: RecipeIngredient, targetPortions: number): number | null {
   if (ingredient.quantity_per_portion == null) return ingredient.quantity;
   return Math.round(ingredient.quantity_per_portion * targetPortions * 100) / 100;
+}
+
+export function normalizeIngredientMeasurement(
+  quantity: number | null,
+  unit: string | null,
+): { quantity: number | null; unit: string | null } {
+  if (quantity == null || !unit) return { quantity, unit };
+
+  const normalizedUnit = unit.trim().toLowerCase().replace(/[.\s]/g, '');
+  const conversions: Record<string, { unit: string; factor: number }> = {
+    g: { unit: 'g', factor: 1 },
+    gramm: { unit: 'g', factor: 1 },
+    gram: { unit: 'g', factor: 1 },
+    kg: { unit: 'g', factor: 1000 },
+    kilogramm: { unit: 'g', factor: 1000 },
+    kilogramme: { unit: 'g', factor: 1000 },
+    mg: { unit: 'g', factor: 0.001 },
+    ml: { unit: 'ml', factor: 1 },
+    milliliter: { unit: 'ml', factor: 1 },
+    millilitre: { unit: 'ml', factor: 1 },
+    l: { unit: 'ml', factor: 1000 },
+    liter: { unit: 'ml', factor: 1000 },
+    litre: { unit: 'ml', factor: 1000 },
+    dl: { unit: 'ml', factor: 100 },
+    cl: { unit: 'ml', factor: 10 },
+    el: { unit: 'EL', factor: 1 },
+    essloeffel: { unit: 'EL', factor: 1 },
+    esslöffel: { unit: 'EL', factor: 1 },
+    tbsp: { unit: 'EL', factor: 1 },
+    tl: { unit: 'TL', factor: 1 },
+    teeloeffel: { unit: 'TL', factor: 1 },
+    teelöffel: { unit: 'TL', factor: 1 },
+    tsp: { unit: 'TL', factor: 1 },
+    tasse: { unit: 'ml', factor: 240 },
+    cups: { unit: 'ml', factor: 240 },
+    cup: { unit: 'ml', factor: 240 },
+  };
+
+  const conversion = conversions[normalizedUnit];
+  if (!conversion) return { quantity, unit };
+
+  return {
+    quantity: Math.round(quantity * conversion.factor * 100) / 100,
+    unit: conversion.unit,
+  };
 }
 
 export function formatQuantity(q: number | null): string {

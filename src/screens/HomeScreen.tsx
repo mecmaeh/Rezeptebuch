@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCookbook } from '@/context/CookbookContext';
 import { fetchRecipes } from '@/lib/recipes';
 import type { Recipe } from '@/types';
-import { ChefHat, Plus, BookOpen, Search } from 'lucide-react';
+import { Plus, BookOpen, Search } from 'lucide-react';
 import { RecipeListItem } from './SearchScreen';
 
 interface Props {
@@ -66,21 +66,7 @@ export function HomeScreen({ onSelectRecipe, onAddRecipe, onGoToSearch }: Props)
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Featured: first recipe with image */}
-            {recipes[0]?.image_url && (
-              <button
-                onClick={() => onSelectRecipe(recipes[0].id)}
-                className="w-full relative rounded-2xl overflow-hidden aspect-[16/10] mb-3 group active:scale-[0.99] transition-transform"
-              >
-                <img src={recipes[0].image_url} alt={recipes[0].title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-left">
-                  <h2 className="text-white font-bold text-lg">{recipes[0].title}</h2>
-                  <p className="text-white/80 text-sm">{recipes[0].portions} Portionen</p>
-                </div>
-              </button>
-            )}
-            {recipes.slice(recipes[0]?.image_url ? 1 : 0).map((recipe) => (
+            {recipes.map((recipe) => (
               <RecipeListItem
                 key={recipe.id}
                 recipe={recipe}

@@ -56,8 +56,6 @@ Deno.serve(async (req: Request) => {
     const mode: 'photo' | 'link' | 'video' = body.mode;
     const imageUrl: string | null = body.imageUrl ?? null;
     const url: string | null = body.url ?? null;
-    const text: string | null = body.text ?? null;
-
     let userContent: any;
     let extractedImageUrl: string | null = null;
 
@@ -77,8 +75,22 @@ Deno.serve(async (req: Request) => {
       }
       userContent = `Extrahiere das Rezept von dieser Webseite.\nURL: ${url}\n\nInhalt:\n${pageContent}`;
       extractedImageUrl = await extractOgImage(url);
-    } else if (mode === 'video' && text) {
-      userContent = `Extrahiere das Rezept aus diesem Videobeschreibung/Transkript:\n\n${text}`;
+    } else if (mode === 'video' && url) {
+      if (!isSupportedVideoUrl(url)) {
+        return new Response(JSON.stringify({ error: "Bitte füge einen gültigen YouTube-, Instagram-, TikTok- oder Facebook-Videolink ein." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const pageContent = await fetchPageContent(url);
+      if (!pageContent) {
+        return new Response(JSON.stringify({ error: "Die Videoseite konnte nicht geladen werden." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userContent = `Extrahiere das Rezept aus diesem Kochvideo oder Reel. Nutze die Videobeschreibung, den Seitentitel und alle verfügbaren Textinhalte.\nVideo-Link: ${url}\n\nSeitentext:\n${pageContent}`;
+      extractedImageUrl = await extractOgImage(url);
     } else {
       return new Response(JSON.stringify({ error: "Ungültiger Import-Modus oder fehlende Eingabe." }), {
         status: 400,
@@ -206,6 +218,23 @@ async function extractOgImage(url: string): Promise<string | null> {
     return null;
   } catch {
     return null;
+  }
+}
+
+function isSupportedVideoUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'https:') return false;
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    return [
+      'youtube.com',
+      'youtu.be',
+      'instagram.com',
+      'tiktok.com',
+      'facebook.com',
+    ].some((host) => hostname === host || hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
   }
 }
 

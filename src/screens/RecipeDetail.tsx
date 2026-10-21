@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchRecipeDetails, scaleQuantity, formatQuantity, deleteRecipe } from '@/lib/recipes';
+import { fetchRecipeDetails, scaleQuantity, formatQuantity, normalizeIngredientMeasurement, deleteRecipe } from '@/lib/recipes';
 import type { RecipeWithDetails } from '@/types';
 import { Clock, Users, X, Plus, Minus, FileDown, Pencil, Trash2, Check, Link as LinkIcon } from 'lucide-react';
 
@@ -152,6 +152,7 @@ export function RecipeDetail({ recipeId, onEdit, onBack, onDeleted }: Props) {
             <div className="space-y-1.5">
               {recipe.ingredients.map((ing, idx) => {
                 const scaled = scaleQuantity(ing, portions);
+                const measurement = normalizeIngredientMeasurement(scaled, ing.unit);
                 const isChecked = checked.has(idx);
                 return (
                   <button
@@ -165,7 +166,7 @@ export function RecipeDetail({ recipeId, onEdit, onBack, onDeleted }: Props) {
                       {isChecked && <Check className="w-3.5 h-3.5 text-white" />}
                     </div>
                     <span className={`text-sm flex-1 ${isChecked ? 'line-through text-stone-400' : 'text-stone-700'}`}>
-                      <span className="font-medium">{formatQuantity(scaled)}{ing.unit ? ` ${ing.unit}` : ''}</span>
+                      <span className="font-medium">{formatQuantity(measurement.quantity)}{measurement.unit ? ` ${measurement.unit}` : ''}</span>
                       {' '}{ing.name}
                       {ing.note && <span className="text-stone-400">, {ing.note}</span>}
                     </span>
@@ -286,7 +287,8 @@ async function exportRecipePDF(recipe: RecipeWithDetails, portions: number) {
   doc.setFontSize(11);
   for (const ing of recipe.ingredients) {
     const scaled = scaleQuantity(ing, portions);
-    const line = `${formatQuantity(scaled)}${ing.unit ? ' ' + ing.unit : ''}  ${ing.name}${ing.note ? ', ' + ing.note : ''}`;
+    const measurement = normalizeIngredientMeasurement(scaled, ing.unit);
+    const line = `${formatQuantity(measurement.quantity)}${measurement.unit ? ' ' + measurement.unit : ''}  ${ing.name}${ing.note ? ', ' + ing.note : ''}`;
     const lines = doc.splitTextToSize(line, contentW);
     ensureSpace(lines.length * 15 + 4);
     doc.text(lines, margin, y);
