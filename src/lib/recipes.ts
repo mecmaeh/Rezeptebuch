@@ -226,6 +226,36 @@ export function normalizeIngredientMeasurement(
     tasse: { unit: 'ml', factor: 240 },
     cups: { unit: 'ml', factor: 240 },
     cup: { unit: 'ml', factor: 240 },
+    // Imperial / US customary (weight -> g)
+    lb: { unit: 'g', factor: 453.59 },
+    lbs: { unit: 'g', factor: 453.59 },
+    pound: { unit: 'g', factor: 453.59 },
+    pounds: { unit: 'g', factor: 453.59 },
+    oz: { unit: 'g', factor: 28.35 },
+    ounce: { unit: 'g', factor: 28.35 },
+    ounces: { unit: 'g', factor: 28.35 },
+    // Imperial / US customary (volume -> ml)
+    fl: { unit: 'ml', factor: 30 },
+    floz: { unit: 'ml', factor: 30 },
+    fluidounce: { unit: 'ml', factor: 30 },
+    fluidounces: { unit: 'ml', factor: 30 },
+    pt: { unit: 'ml', factor: 473 },
+    pint: { unit: 'ml', factor: 473 },
+    pints: { unit: 'ml', factor: 473 },
+    qt: { unit: 'ml', factor: 946 },
+    quart: { unit: 'ml', factor: 946 },
+    quarts: { unit: 'ml', factor: 946 },
+    gal: { unit: 'ml', factor: 3785 },
+    gallon: { unit: 'ml', factor: 3785 },
+    gallons: { unit: 'ml', factor: 3785 },
+    // English spoon measures
+    tablespoon: { unit: 'EL', factor: 1 },
+    tablespoons: { unit: 'EL', factor: 1 },
+    teaspoon: { unit: 'TL', factor: 1 },
+    teaspoons: { unit: 'TL', factor: 1 },
+    // Sticks (US butter) -> g
+    stick: { unit: 'g', factor: 113 },
+    sticks: { unit: 'g', factor: 113 },
   };
 
   const conversion = conversions[normalizedUnit];

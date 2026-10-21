@@ -33,7 +33,10 @@ Return ONLY valid JSON (no markdown fences) with this exact schema:
 }
 Rules:
 - Extract quantities as numbers (e.g. "200g" -> quantity: 200, unit: "g"; "2 EL" -> quantity: 2, unit: "EL").
+- Convert ALL units to the German/metric set: g, ml, EL, TL. Examples: "1 cup" -> 240 ml; "1 tbsp" -> 1 EL; "1 tsp" -> 1 TL; "1 lb" -> 453.59 g; "2 oz" -> 56.7 g; "1 pint" -> 473 ml; "1 quart" -> 946 ml; "1 stick butter" -> 113 g.
+- Keep the original unit only if it is already g, ml, EL or TL.
 - If no quantity is given, set quantity to null.
+- Translate English ingredient names and instructions into German.
 - Steps should be clear, numbered preparation instructions.
 - Categories should be in German, short, and commonly used.
 - If the input is not a recipe, return {"title": "", "portions": 4, "prep_time_minutes": null, "ingredients": [], "steps": [], "categories": [], "notes": null}`;
