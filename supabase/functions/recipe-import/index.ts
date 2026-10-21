@@ -82,14 +82,14 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const pageContent = await fetchPageContent(url);
+      const pageContent = await fetchVideoContent(url);
       if (!pageContent) {
-        return new Response(JSON.stringify({ error: "Die Videoseite konnte nicht geladen werden." }), {
+        return new Response(JSON.stringify({ error: "Die Videoseite konnte nicht geladen werden oder enthält keine auslesbare Beschreibung." }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      userContent = `Extrahiere das Rezept aus diesem Kochvideo oder Reel. Nutze die Videobeschreibung, den Seitentitel und alle verfügbaren Textinhalte.\nVideo-Link: ${url}\n\nSeitentext:\n${pageContent}`;
+      userContent = `Extrahiere das Rezept aus diesem Kochvideo oder Reel. Nutze die Videobeschreibung, den Seitentitel und alle verfügbaren Textinhalte. Wenn keine vollständigen Mengen vorhanden sind, leite nur aus eindeutig genannten Angaben etwas ab und erfinde keine Zutaten.\nVideo-Link: ${url}\n\nVerfügbare Videodaten:\n${pageContent}`;
       extractedImageUrl = await extractOgImage(url);
     } else {
       return new Response(JSON.stringify({ error: "Ungültiger Import-Modus oder fehlende Eingabe." }), {
@@ -163,6 +163,26 @@ Deno.serve(async (req: Request) => {
 });
 
 async function fetchPageContent(url: string): Promise<string | null> {
+  const html = await fetchHtml(url);
+  return html ? htmlToText(html).slice(0, 8000) : null;
+}
+
+async function fetchVideoContent(url: string): Promise<string | null> {
+  const html = await fetchHtml(url);
+  if (!html) return null;
+
+  const parts = [
+    extractMetaContent(html, 'description'),
+    extractMetaContent(html, 'og:title'),
+    extractMetaContent(html, 'og:description'),
+    extractEmbeddedYouTubeDescription(html),
+    htmlToText(html),
+  ].filter((part): part is string => Boolean(part?.trim()));
+
+  return [...new Set(parts)].join('\n\n').slice(0, 12000) || null;
+}
+
+async function fetchHtml(url: string): Promise<string | null> {
   try {
     const resp = await fetch(url, {
       headers: {
@@ -172,29 +192,48 @@ async function fetchPageContent(url: string): Promise<string | null> {
       redirect: "follow",
     });
     if (!resp.ok) return null;
-    const html = await resp.text();
-    const text = htmlToText(html);
-    return text.slice(0, 8000);
+    return await resp.text();
+  } catch {
+    return null;
+  }
+}
+
+function extractMetaContent(html: string, name: string): string | null {
+  const escapedName = name.replace(':', '\\:');
+  const match = html.match(new RegExp(`<meta[^>]+(?:name|property)=["']${escapedName}["'][^>]+content=["']([^"']+)["'][^>]*>`, 'i'));
+  return match ? decodeHtmlEntities(match[1]) : null;
+}
+
+function extractEmbeddedYouTubeDescription(html: string): string | null {
+  const match = html.match(/"shortDescription":"((?:\\.|[^"\\])*)"/);
+  if (!match) return null;
+  try {
+    return JSON.parse(`"${match[1]}"`);
   } catch {
     return null;
   }
 }
 
 function htmlToText(html: string): string {
-  return html
+  return decodeHtmlEntities(html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<nav[\s\S]*?<\/nav>/gi, '')
     .replace(/<footer[\s\S]*?<\/footer>/gi, '')
     .replace(/<header[\s\S]*?<\/header>/gi, '')
     .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim());
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/&#39;/g, "'");
 }
 
 async function extractOgImage(url: string): Promise<string | null> {
