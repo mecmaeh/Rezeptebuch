@@ -104,17 +104,32 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!openaiResponse.ok) {
-      const errText = await openaiResponse.text();
-      return new Response(JSON.stringify({ error: `OpenAI Fehler: ${openaiResponse.status}` }), {
+      const errorBody = await openaiResponse.json().catch(() => null) as { error?: { message?: string } } | null;
+      const openaiMessage = errorBody?.error?.message ?? '';
+      const message = openaiResponse.status === 401
+        ? 'Der OpenAI-Schlüssel ist ungültig oder abgelaufen. Bitte hinterlege einen gültigen OpenAI-Schlüssel in den Supabase-Edge-Function-Geheimnissen.'
+        : openaiResponse.status === 429
+          ? 'Das OpenAI-Nutzungslimit wurde erreicht. Bitte prüfe das Guthaben und die Limits des OpenAI-Kontos.'
+          : `OpenAI konnte das Rezept nicht verarbeiten (${openaiResponse.status}).`;
+      console.error('OpenAI request failed', openaiResponse.status, openaiMessage);
+      return new Response(JSON.stringify({ error: message }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const openaiData = await openaiResponse.json();
+    const openaiData = await openaiResponse.json() as { choices?: { message?: { content?: string } }[] };
     const content = openaiData.choices?.[0]?.message?.content ?? "";
     const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const extracted = JSON.parse(jsonStr) as ExtractedRecipe;
+    let extracted: ExtractedRecipe;
+    try {
+      extracted = JSON.parse(jsonStr) as ExtractedRecipe;
+    } catch {
+      return new Response(JSON.stringify({ error: 'OpenAI hat kein gültiges Rezeptformat zurückgegeben. Bitte versuche es erneut.' }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!extracted.title || extracted.ingredients.length === 0) {
       return new Response(JSON.stringify({ error: "Kein Rezept erkannt. Bitte versuche es mit einer anderen Eingabe." }), {
