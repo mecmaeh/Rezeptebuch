@@ -1,10 +1,12 @@
 export async function callImportFunction(
   payload: { mode: 'photo'; imageUrl: string } | { mode: 'link'; url: string } | { mode: 'video'; text: string }
 ): Promise<{ data: any | null; error: string | null }> {
-  const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipe-import`;
+  const supUrl = (import.meta.env.VITE_SUPABASE_URL as string) || 'https://pfljdqjtkqrvbmfuynug.supabase.co';
+  const supKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmbGpkcWp0a3FydmJtZnV5bnVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1OTE3NzksImV4cCI6MjEwODE2Nzc3OX0.Np4MutIfmXxaUmQ6lq0WUvbdZolV2kvlYWRzC6EjHUk';
+  const apiUrl = `${supUrl}/functions/v1/recipe-import`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    Authorization: `Bearer ${supKey}`,
   };
 
   try {
@@ -31,7 +33,7 @@ export async function uploadImageForImport(
   file: File | Blob,
   contentType: string = 'image/jpeg'
 ): Promise<{ url: string | null; error: string | null }> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || 'https://pfljdqjtkqrvbmfuynug.supabase.co';
   const bucket = 'recipe-images';
   const path = `_temp_import/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
 
